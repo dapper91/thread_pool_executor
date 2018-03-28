@@ -1,10 +1,10 @@
 # C++ Thread Pool Executor
 
-Pure C++11 Thread Pool Executor. No external dependencies.
+Pure C++14 Thread Pool Executor. No external dependencies.
 
 ## Dependencies
 
-* C++11
+* C++14
 
 
 
@@ -44,7 +44,7 @@ int main()
 
     for (size_t i = 0; i < 200; ++i) {
         executor.submit(std::bind(func, i));
-        std::this_thread::sleep_for(std::chrono::milliseconds(dist(rd)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(dist(rand_dev)));
     }
 
     executor.wait(10s);
@@ -61,20 +61,20 @@ int main()
 
 ### Constructor
 
-Creates a client instance and authenticates on the service:
+Creates a thread pool executor instance and starts `pool_size` threads:
 
 ```c++
 
-client = YaMusicClient('dima', 'password123')
+ThreadPoolExecutor executor(pool_size, max_pool_size, keep_alive_time, max_queue_size);
 
 ```
 
 Constructor arguments:
 
-- `login` - yandex account user name
-- `password` - yandex account password
-- `logger` - a python logger to use to instead of a default logger (default: None)
-- `remember_me` - force the service to remember the identity of the user between sessions (default: True)
+- `pool_size` - the number of threads to keep in the pool, even if they are idle
+- `max_pool_size` - the maximum number of threads to allow in the pool
+- `keep_alive_time` - when the number of threads is greater than the `pool_size`, this is the maximum time that excess idle threads will wait for new tasks before terminating
+- `max_queue_size` - the maximum number of tasks in the executor queue, if the `max_queue_size` is reached `QueueIsFull` exception will be thrown
 
 ## License
 
