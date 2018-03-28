@@ -61,13 +61,7 @@ int main()
 
 ### Constructor
 
-Creates a thread pool executor instance and starts `pool_size` threads:
-
-```c++
-
-ThreadPoolExecutor executor(pool_size, max_pool_size, keep_alive_time, max_queue_size);
-
-```
+Creates a thread pool executor instance and starts `pool_size` threads.
 
 Constructor arguments:
 
@@ -75,6 +69,30 @@ Constructor arguments:
 - `max_pool_size` - the maximum number of threads to allow in the pool
 - `keep_alive_time` - when the number of threads is greater than the `pool_size`, this is the maximum time that excess idle threads will wait for new tasks before terminating
 - `max_queue_size` - the maximum number of tasks in the executor queue, if the `max_queue_size` is reached `QueueIsFull` exception will be thrown
+
+### submit
+
+Executes the given task sometime in the future.
+
+Method arguments:
+
+- `func` - the task to execute
+
+### is_active
+
+Returns true if this executor has not been shut down.
+
+### shutdown
+
+Initiates an orderly shutdown in which previously submitted tasks are executed, but no new tasks will be accepted.
+
+### wait
+
+Blocks until all tasks have completed execution after a shutdown request, or the timeout occurs, whichever happens first.
+
+Method arguments:
+
+- `timeout` - the maximum time to wait
 
 ## License
 
