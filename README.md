@@ -99,4 +99,4 @@ Method arguments:
 
 ## License
 
-WTFPL
+Public Domain License

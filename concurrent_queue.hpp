@@ -258,11 +258,11 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !queue.empty() || is_shutdown_flag;
+            return !queue.empty() || is_terminated_flag;
         });
 
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (queue.empty()) {
             throw TimeoutError("queue timeout has been expired");
