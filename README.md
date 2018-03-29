@@ -77,9 +77,9 @@ Method arguments:
 
 - `func` - the task to execute
 
-### is_active
+### is_shutdown
 
-Returns true if this executor has not been shut down.
+Returns true if this executor has been shut down.
 
 ### shutdown
 
@@ -88,6 +88,10 @@ Initiates an orderly shutdown in which previously submitted tasks are executed, 
 ### terminate
 
 Initiates a termination process in which previously submitted tasks waiting in the queue will be destroyed, no new tasks will be accepted.
+
+### is_terminated
+
+Returns true if this executor has been is_terminated.
 
 ### wait
 
