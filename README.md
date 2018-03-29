@@ -47,7 +47,6 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(dist(rand_dev)));
     }
 
-    executor.wait(10s);
     executor.shutdown();
     executor.wait();
 
@@ -85,6 +84,10 @@ Returns true if this executor has not been shut down.
 ### shutdown
 
 Initiates an orderly shutdown in which previously submitted tasks are executed, but no new tasks will be accepted.
+
+### terminate
+
+Initiates a termination process in which previously submitted tasks waiting in the queue will be destroyed, no new tasks will be accepted.
 
 ### wait
 

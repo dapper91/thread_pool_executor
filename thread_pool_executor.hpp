@@ -31,8 +31,8 @@ public:
 
     virtual ~ThreadPoolExecutor()
     {
-        if (is_active()) {
-            shutdown();
+        if (!is_terminated()) {
+            terminate();
         }
 
         wait();
@@ -54,14 +54,24 @@ public:
         }
     }
 
-    bool is_active()
-    {
-        return !queue.is_closed();
-    }
-
     void shutdown()
     {
-        queue.close();
+        queue.shutdown();
+    }
+
+    bool is_shutdown()
+    {
+        return queue.is_shutdown();
+    }
+
+    void terminate()
+    {
+        queue.terminate();
+    }
+
+    bool is_terminated()
+    {
+        return queue.is_terminated();
     }
 
     void wait()
