@@ -59,7 +59,7 @@ public:
     typedef typename Queue::const_reference     const_reference;
 
     ConcurrentQueue(size_type max_size = std::numeric_limits<size_t>::max()):
-        max_size(max_size), is_shutdown_flag(false)
+        max_size(max_size), is_shutdown_flag(false), is_terminated_flag(false)
     {
         if (max_size == 0) {
             throw std::invalid_argument("queue max size is 0");
@@ -101,7 +101,7 @@ public:
     void push(Type&& value)
     {
         std::lock_guard<std::mutex> lock(mx);
-        if (is_shutdown_flag) {
+        if (is_shutdown_flag || is_terminated_flag) {
             throw QueueIsClosed("queue is closed");
         }
         if (full()) {
@@ -118,11 +118,11 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !full() || is_shutdown_flag;
+            return !full() || is_shutdown_flag || is_terminated_flag;
         });
 
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_shutdown_flag || is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (full()) {
             throw TimeoutError("queue timeout has been expired");
@@ -135,8 +135,8 @@ public:
     void push(const Type& value)
     {
         std::lock_guard<std::mutex> lock(mx);
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_shutdown_flag || is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (full()) {
             throw QueueIsFull("queue is full");
@@ -152,11 +152,11 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !full() || is_shutdown_flag;
+            return !full() || is_shutdown_flag || is_terminated_flag;
         });
 
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_shutdown_flag || is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (full()) {
             throw TimeoutError("queue timeout has been expired");
@@ -170,8 +170,8 @@ public:
     void emplace(Args&&... args)
     {
         std::lock_guard<std::mutex> lock(mx);
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_shutdown_flag || is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (full()) {
             throw QueueIsFull("queue is full");
@@ -187,11 +187,11 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !full() || is_shutdown_flag;
+            return !full() || is_shutdown_flag || is_terminated_flag;
         });
 
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_shutdown_flag || is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (full()) {
             throw TimeoutError("queue timeout has been expired");
@@ -204,11 +204,16 @@ public:
     void pull(Type& value)
     {
         std::lock_guard<std::mutex> lock(mx);
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (queue.empty()) {
-            throw QueueIsEmpty("queue is empty");
+            if (is_shutdown_flag) {
+                throw QueueIsClosed("queue is closed");
+            }
+            else {
+                throw QueueIsEmpty("queue is empty");
+            }
         }
 
         value = std::move(queue.front()); queue.pop();
@@ -220,14 +225,19 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !queue.empty() || is_shutdown_flag;
+            return !queue.empty() || is_terminated_flag || is_shutdown_flag;
         });
 
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (queue.empty()) {
-            throw TimeoutError("queue timeout has been expired");
+            if (is_shutdown_flag) {
+                throw QueueIsClosed("queue is closed");
+            }
+            else {
+                throw TimeoutError("queue timeout has been expired");
+            }
         }
 
         value = std::move(queue.front()); queue.pop();
@@ -238,11 +248,16 @@ public:
         static_assert(std::is_nothrow_move_constructible<Type>::value, "Type pull() method requires noexcept move-constructible type");
 
         std::lock_guard<std::mutex> lock(mx);
-        if (is_shutdown_flag) {
-            throw QueueIsClosed("queue is shutdown");
+        if (is_terminated_flag) {
+            throw QueueIsClosed("queue is closed");
         }
         if (queue.empty()) {
-            throw QueueIsEmpty("queue is empty");
+            if (is_shutdown_flag) {
+                throw QueueIsClosed("queue is closed");
+            }
+            else {
+                throw QueueIsEmpty("queue is empty");
+            }
         }
 
         Type value = std::move(queue.front()); queue.pop();
@@ -258,14 +273,19 @@ public:
         std::unique_lock<std::mutex> lock(mx);
 
         cv.wait_for(lock, timeout, [this] {
-            return !queue.empty() || is_terminated_flag;
+            return !queue.empty() || is_terminated_flag || is_shutdown_flag;
         });
 
         if (is_terminated_flag) {
             throw QueueIsClosed("queue is closed");
         }
         if (queue.empty()) {
-            throw TimeoutError("queue timeout has been expired");
+            if (is_shutdown_flag) {
+                throw QueueIsClosed("queue is closed");
+            }
+            else {
+                throw TimeoutError("queue timeout has been expired");
+            }
         }
 
         Type value = std::move(queue.front()); queue.pop();
@@ -281,18 +301,17 @@ public:
         cv.notify_all();
     }
 
+    bool is_shutdown() const
+    {
+        return is_shutdown_flag;
+    }
+
     void terminate()
     {
         std::lock_guard<std::mutex> lock(mx);
 
-        is_shutdown_flag = true;
         is_terminated_flag = true;
         cv.notify_all();
-    }
-
-    bool is_shutdown() const
-    {
-        return is_shutdown_flag;
     }
 
     bool is_terminated() const

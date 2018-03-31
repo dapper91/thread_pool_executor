@@ -37,7 +37,7 @@ public:
 
         wait();
     }
-    
+
     template<typename F> 
     void submit(F func)
     {
