@@ -26,8 +26,8 @@ void task(size_t i)
     std::this_thread::sleep_for(std::chrono::seconds(dist(rand_dev)));
 
     message << "[" << "worker-" << std::setfill('0') << std::setw(2) << worker_idx << "]" << "\t" 
-            << "task-" << std::setw(2) << i << " has been compleated.";
-    std::cout << message.str() << std::endl;
+            << "task-" << std::setw(2) << i << " has been compleated." << std::endl;
+    std::cout << message.str();
 }
 
 int main()
